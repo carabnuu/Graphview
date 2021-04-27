@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>GraphView.html</title>
+
+
+    <meta name="keywords" content="keyword1,keyword2,keyword3">
+    <meta name="description" content="this is my page">
+    <meta name="content-type" content="text/html; charset=GBK">
+    <style>
+        .tooltip {
+            position: absolute;
+            visibility: hidden;
+            padding: 10px 10px 10px 10px;
+            opacity: 0.8;
+            background-color: #515a6e;
+            font-size: 14px;
+            line-height: 30px;
+            left: 0px;
+            top: 0px;
+            border-radius: 10px;
+            color: #fff;
+        }
+
+        circle {
+            stroke-width: 3px;
+        }
+
+        .nodes text {
+            font-weight: 530;
+        }
+
+        .link {
+            stroke: #999;
+            stroke-opacity: .6;
+        }
+
+        .selected circle {
+
+            stroke: rgb(241, 113, 62);
+            stroke-width: 5px;
+        }
+
+        .selected text {
+            stroke: black;
+            stroke-opacity: 0.3;
+        }
+
+        .lasso path {
+            stroke: rgb(80, 80, 80);
+            stroke-width: 2px;
+        }
+
+        .lasso .drawn {
+            fill-opacity: .05;
+        }
+
+        .lasso .loop_close {
+            fill: none;
+            stroke-dasharray: 4, 4;
+        }
+
+        .lasso .origin {
+            fill: #3399FF;
+            fill-opacity: .5;
+        }
+
+        .notpossible {
+            /*fill: rgb(200,200,200);*/
+            opacity: 0.2;
+        }
+
+        .possible {
+            opacity: 1;
+        }
+
+        .lassoselected {
+            stroke: steelblue;
+        }
+        .d3-context-menu {
+	position: absolute;
+	display: none;
+	background-color: #f2f2f2;
+	border-radius: 4px;
+
+	font-family: Arial, sans-serif;
+	font-size: 14px;
+	min-width: 150px;
+	border: 1px solid #d4d4d4;
+
+	z-index:1200;
+}
+
+.d3-context-menu ul {
+	list-style-type: none;
+	margin: 4px 0px;
+	padding: 0px;
+	cursor: default;
+}
+
+.d3-context-menu ul li {
+	padding: 4px 16px;
+}
+
+.d3-context-menu ul li:hover {
+	background-color: #4677f8;
+	color: #fefefe;
+}
+    </style>
+    <script src="js/d3.min.js"></script>
+     <script src="js/contextMenu.js"> </script>
+
+
+    <script src="js/d3-lasso.js"></script>
+    <script src="src/lasso.js" charset="utf-8"></script>
+     <script src='src/matrix.js' charset='utf-8'></script>
+    <script src='src/graph.js' charset='utf-8'></script>
+    <script src="src/path.js" charset="utf-8"></script>
+    <script src="src/zoom.js" charset="utf-8"></script>
+
+</head>
+
+<body>
+
+
+    <div id="showGrapn" style='overflow-x: auto; padding: 0px; margin: 0px;float: left;'></div>
+    <div class="tooltip">
+        <p><b>name:</b> <span class="tipName">baojian52.com</span></p>
+        <p><b>category:</b> <span class="tipDomain">Domain</span></p>
+        <p><b>industry:</b> <span class="tipIndustry">涉枪</span></p>
+        <p><b>is_alive:</b> <span class="tipIsAlive">true</span></p>
+    </div>
+
+    <script>
+        var edges = [];
+        var nodes = [];
+        // console.log(nodes);
+        // console.log(edges);
+        const width = 1200, height = 530;  // SVG的大小
+        const margin = { // 四周的边距
+            top: 30,
+            right: 80,
+            bottom: 5,
+            left: 5
+        };
+
+        var transform = {
+            x: 0.0,
+            y: 0.0,
+            k: 1.0
+        };
+        var graph = new Graph(width, height);
+
+        d3.json('data/data2.json').then(function (dataset) {
+            // d3.json('case1/dataTest.json').then(function(dataset){
+            nodes = JSON.parse(JSON.stringify(Object.values(dataset.nodes)));
+            edges = JSON.parse(JSON.stringify(Object.values(dataset.links)));
+
+            var svg = d3.select("#showGrapn")  // 添加SVG
+                .append("svg")
+                .attr('id', 'mainsvg')
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)   // 添加平移和缩放功能
+
+            // remove previous graphs
+            d3.selectAll("#matrix > *").remove();
+            d3.selectAll("#force > *").remove();
+            d3.selectAll("#path > *").remove();
+
+            var matrix_layer = svg.append('g').attr('id', 'matrix');
+            var force_layer = svg.append('g').attr('id', 'force');
+            var path_layer = svg.append('g').attr('id', 'path');
+
+            //console.log(edges)
+            var neighbors = {};
+            matrix_list = [];
+            matrix_nodes = [];
+            var dataLinks = [];
+            var dataNodes = [];
+
+            nodes.forEach(function (d) {
+                d.id = stripscript(d.name);
+                d.name = stripscript(d.name);
+                neighbors[d.id] = [];
+                if (matrix_nodes.indexOf(d.Id) < 0) {
+                    dataNodes.push(d);
+                }
+            });
+            edges.forEach(function (d) {
+                 d.Target = stripscript(d.target);
+                d.Source = stripscript(d.source);
+                d.target = stripscript(d.target);
+                d.source = stripscript(d.source);
+            });
+            edges.forEach(function (d) {
+                neighbors[d.source].push(d.target);
+                neighbors[d.target].push(d.source);
+                d.source = stripscript(d.Source);
+                d.target = stripscript(d.Target);
+                if (matrix_nodes.indexOf(d.source) < 0 && matrix_nodes.indexOf(d.target) < 0) {
+                    dataLinks.push(d);
+                }
+            });
+            originData = edges;
+ 
+               //console.log(dataLinks)
+            //console.log(neighbors)
+           graph = new Graph(width, height, dataLinks, dataNodes);
+            //初始化布局
+  // console.log(l)
+  var z = new Zoom(svg, transform);
+
+            graph.create(edges, nodes, neighbors);
+            paths.Create(dataLinks);
+
+
+            var l = new Lasso();
+           l.bind();
+
+                      console.log(k)
+        })
+        function stripscript(s) {
+            var pattern = new RegExp("[`~!@#$^&*()=|{}':;',\\[\\].<>/?~！@#￥……&*（）&mdash;—|{}【】‘；：”“'。，、？]")
+            var rs = "";
+            for (var i = 0; i < s.length; i++) {
+                rs = rs + s.substr(i, 1).replace(pattern, '');
+            }
+            return rs;
+        }
+
+
+    </script>
+</body>
+
+</html>
