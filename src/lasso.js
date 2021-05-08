@@ -12,9 +12,9 @@ Lasso.prototype.bind = function () {
     
 	var lassostarted = function() {
 			lasso.items()
-		    	//.attr("fill", "#bbb")
 		    	.classed("notpossible", true)
-		        .classed("lassoselected", false);
+		        .classed("lassoselected", false)
+				.attr("stroke", "grey");;
 	};
 
 	var lassodraw = function() {
@@ -37,8 +37,8 @@ Lasso.prototype.bind = function () {
 
 			// Style the selected dots
 		    lasso.selectedItems()
-		        .classed("lassoselected", true);
-		        //.attr("fill", "red");
+		        .classed("lassoselected", true)
+		        .attr("stroke", "red");
 
 		    // Reset the style of the not selected dots
 		    // lasso.notSelectedItems()
@@ -53,22 +53,20 @@ Lasso.prototype.bind = function () {
             if(Object.keys(newNodes).length != 0) {
                 //aaa = d3.select('#n'+Object.keys(newNodes)[0]);
  				 
-                graph.delete(newNodes);
+                // graph.delete(newNodes);
 
 				//调整x y 位置！！！！！！！！！
 				if(k===1){
 					var tempx=(d3.event.x - x)/k;
 					var tempy=(d3.event.y - y)/k;
-					var m = new Matrix(tempx, tempy);
+					var m = new Matrix(10, 100);
 				}
 				else{
 					var tempx=(d3.event.x - x)/k;
 					var tempy=(d3.event.y - y)/k;
-					var m = new Matrix(tempx, tempy);
-					console.log([tempx,tempy])
+					var m = new Matrix(10, 100);
  				}
-				 
-                //console.log(Object.keys(ids));
+				  
                 m.Create(Object.keys(newNodes));
                 
             }

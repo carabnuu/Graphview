@@ -126,7 +126,7 @@ Paths.prototype.Push = function(id) {//从matrix来
 		else return;
 
 		 
-		var node = d3.select('#n'+in_force);
+		var node = d3.select('#n'+stripscript(in_force));
  		///console.log(in_force)
 		if (node.empty()) return;
 		_this.data.push({
@@ -144,8 +144,10 @@ Paths.prototype.Push = function(id) {//从matrix来
 		})
 		//console.log(_this.data[_this.data.length-1]);
 		_this.num++;
-	});
+	
+	}); 
 	this.Render();
+
 }
 
 Paths.prototype.generate = function(d) {
@@ -204,7 +206,8 @@ Paths.prototype.Render = function() {
 					.data(_this.data)
 					.enter()
 					.append('path')
-					.attr('class', function(d) {return 'path'+d.matrix_id;})
+					.attr('class', function(d) { 
+						return 'path'+d.matrix_id;})
 					.attr("id",'paths')
 					.attr('d', function(d) {return line(_this.generate(d));})
 					.attr('stroke', '#adadad')

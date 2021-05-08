@@ -27,7 +27,7 @@ function stripscript(s) {
 }
 Graph.prototype.create = function (edges, nodes, neighbors) {
 	d3.selectAll("#networklayer").remove();
-	this.layer = d3.select("#force"); 
+	this.layer = d3.select("#force")
 	this.svg = d3.select("#mainsvg");
 	this.layer.on('dblclick.zoom', null);//防止按键冲突，消除zoom的双击功能
 
@@ -44,7 +44,8 @@ Graph.prototype.create = function (edges, nodes, neighbors) {
 		_this.currNeighbors[d] = neighbors[d];
 	});
  	var content = this.layer.append("g")
-		.attr("id", "networklayer");
+		.attr("id", "networklayer")
+	
 
 	 
 	content.append('defs').append('marker')   //三角形【箭头】
@@ -271,7 +272,6 @@ Graph.prototype.create = function (edges, nodes, neighbors) {
 		.force("link", d3.forceLink().id(function (d) { return d.name }).distance(120))
 		.force("charge", d3.forceManyBody().strength(-700).distanceMax(1200))
 		.force("center", d3.forceCenter(width / 2, height / 2))
-		.alphaMin(0.001) //需要在 [0, 1] 之间。如果没有指定 min 则返回当前的最小 alpha 值，默认为 0.001. 在仿真内部，会不断的减小 alpha 值直到 alpha 值小于 最小 alpha。
 
 	simulation.nodes(nodes)
 		.on("tick", ticked);
@@ -435,8 +435,7 @@ Graph.prototype.delete = function (ids) {
 	this.currNeighbors = ngb;
  
 	console.log(l)
-	graph.update(n,l);
-
+	graph.update(n,l); 
 	//for (var str in Object.keys(ids)) d3.select('#n'+Object.keys(ids)[str]).remove();
 
 	for (var i = paths.data.length - 1; i >= 0; i--) if (paths.data[i].force_id in ids) paths.data.splice(i, 1); //delete data that won't be used
@@ -544,7 +543,7 @@ Graph.prototype.update = function (nodes,edges) {
 		.attr("stroke", d => linkColorScale(d.relation))
 		.attr("stroke-width", "1px")
 		.style("opacity", 0.8)
-		.attr("id", d => "line" + d.source + d.target)
+		.attr("id", d => "line" + d.Source + d.Target)
 		.attr("class", "links")
 		.attr('marker-end', 'url(#arrowhead)');
 
@@ -702,14 +701,16 @@ Graph.prototype.update = function (nodes,edges) {
 				return d.x; 
 			});
 			node.attr("transform", d => `translate(${d.x},${d.y})`);
-
+  
 		edgepaths.attr('d', d => 'M ' + d.source.x + ' ' + d.source.y + ' L ' + d.target.x + ' ' + d.target.y);
 		paths.Update();
+		
 
 	} 
 	var simulation=this.simulation;
+	var _this=this;
 	function dragstarted(d) {
-		if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+		if (!d3.event.active) simulation.alphaTarget(0).restart();
 		d.fy = d.y;
 		d.fx = d.x;
 	}
@@ -719,9 +720,9 @@ Graph.prototype.update = function (nodes,edges) {
 		d.fy = d3.event.y;
 	}
 	function dragended(d) {
-		if (!d3.event.active) {
-			simulation.alphaTarget(0);
-		}
+		 if (!d3.event.active) {
+		 	simulation.alphaTarget(0);
+		 }
 		d.fx = null;
 		d.fy = null;
 		for (var i in matrix_list) {
@@ -729,7 +730,6 @@ Graph.prototype.update = function (nodes,edges) {
 			var x = d3.event.x;
 			var y = d3.event.y;
 			if (x>matrix.x && x<matrix.x+matrix.unitsize*matrix.num_nodes && y>matrix.y && y<matrix.y+matrix.unitsize*matrix.num_nodes) {
-				console.log(2);
 				var aaa = {};
 				aaa[d.id] = 1;
 				_this.delete(aaa);
@@ -741,6 +741,7 @@ Graph.prototype.update = function (nodes,edges) {
 	d3.selectAll(".origin").remove();
 	let l=new Lasso();
 	l.bind();
+	
 	//var newzoom = new Zoom(d3.select("#mainsvg"), transform);
 
 } 
