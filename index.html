@@ -74,47 +74,75 @@
         .possible {
             opacity: 1;
         }
+ 
 
-        .lassoselected {
-            stroke: steelblue;
-        }
         .d3-context-menu {
-	position: absolute;
-	display: none;
-	background-color: #f2f2f2;
-	border-radius: 4px;
+            position: absolute;
+            display: none;
+            background-color: #f2f2f2;
+            border-radius: 4px;
 
-	font-family: Arial, sans-serif;
-	font-size: 14px;
-	min-width: 150px;
-	border: 1px solid #d4d4d4;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            min-width: 150px;
+            border: 1px solid #d4d4d4;
 
-	z-index:1200;
-}
+            z-index: 1200;
+        }
 
-.d3-context-menu ul {
-	list-style-type: none;
-	margin: 4px 0px;
-	padding: 0px;
-	cursor: default;
-}
+        .d3-context-menu ul {
+            list-style-type: none;
+            margin: 4px 0px;
+            padding: 0px;
+            cursor: default;
+        }
 
-.d3-context-menu ul li {
-	padding: 4px 16px;
-}
+        .d3-context-menu ul li {
+            padding: 4px 16px;
+        }
 
-.d3-context-menu ul li:hover {
-	background-color: #4677f8;
-	color: #fefefe;
-}
+        .d3-context-menu ul li:hover {
+            background-color: #4677f8;
+            color: #fefefe;
+        }
+
+        .background {
+            fill: #eee;
+        }
+
+        #matrix line {
+            stroke: #fff;
+        }
+
+        text.active {
+            fill: red;
+            font-size: 120%;
+        }
+
+        rect.highlight {
+            fill: none;
+            stroke: red;
+            stroke-width: 2;
+        }
+
+        #order {
+            position: absolute;
+            top: 10px;
+            left:1050px;
+        }
+
+        .matrixlayer{
+            position:absolute;
+            top:30px;
+        }
     </style>
     <script src="js/d3.min.js"></script>
-     <script src="js/contextMenu.js"> </script>
-
+    <script src="js/contextMenu.js"> </script>
+    <script src='js/reorder.js' charset='utf-8'></script>
 
     <script src="js/d3-lasso.js"></script>
     <script src="src/lasso.js" charset="utf-8"></script>
-     <script src='src/matrix.js' charset='utf-8'></script>
+    <script src='src/matrix.js' charset='utf-8'></script>
     <script src='src/graph.js' charset='utf-8'></script>
     <script src="src/path.js" charset="utf-8"></script>
     <script src="src/zoom.js" charset="utf-8"></script>
@@ -125,23 +153,35 @@
 
 
     <div id="showGrapn" style='overflow-x: auto; padding: 0px; margin: 0px;float: left;'></div>
+    <select id="order">
+        <option value="name">by Name</option>
+        <option value="count">by Frequency</option>
+        <option value="group">by Cluster</option>
+        <option value="leafOrder">by Leaf Order</option>
+        <option value="rcm">by Bandwidth Reduction (RCM)</option>
+        <option value="spectral">Spectral</option>
+    </select>
+
     <div class="tooltip">
         <p><b>name:</b> <span class="tipName">baojian52.com</span></p>
         <p><b>category:</b> <span class="tipDomain">Domain</span></p>
         <p><b>industry:</b> <span class="tipIndustry">涉枪</span></p>
         <p><b>is_alive:</b> <span class="tipIsAlive">true</span></p>
     </div>
+    <svg class='matrixlayer' width='1000' height='1000'>
+
+    </svg>
 
     <script>
         var edges = [];
         var nodes = [];
         // console.log(nodes);
         // console.log(edges);
-        const width = 1200, height = 530;  // SVG的大小
+        const width = 1200, height = 1000;  // SVG的大小
         const margin = { // 四周的边距
             top: 30,
-            right: 80,
-            bottom: 5,
+            right: 180,
+            bottom: 50,
             left: 5
         };
 
@@ -152,15 +192,14 @@
         };
         var graph = new Graph(width, height);
 
-        d3.json('data/data2.json').then(function (dataset) {
+        d3.json('data/case11.json').then(function (dataset) {
             // d3.json('case1/dataTest.json').then(function(dataset){
             nodes = JSON.parse(JSON.stringify(Object.values(dataset.nodes)));
             edges = JSON.parse(JSON.stringify(Object.values(dataset.links)));
-
             var svg = d3.select("#showGrapn")  // 添加SVG
                 .append("svg")
                 .attr('id', 'mainsvg')
-                .attr("width", width + margin.left + margin.right)
+                .attr("width", width + margin.left - margin.right)
                 .attr("height", height + margin.top + margin.bottom)   // 添加平移和缩放功能
 
             // remove previous graphs
@@ -188,7 +227,9 @@
                 }
             });
             edges.forEach(function (d) {
-                 d.Target = stripscript(d.target);
+                d.s = d.source;
+                d.t = d.target;
+                d.Target = stripscript(d.target);
                 d.Source = stripscript(d.source);
                 d.target = stripscript(d.target);
                 d.source = stripscript(d.source);
@@ -204,24 +245,23 @@
             });
             originData = edges;
             originNode = nodes;
-               //console.log(dataLinks)
+            //console.log(dataLinks)
             //console.log(neighbors)
-           graph = new Graph(width, height, dataLinks, dataNodes);
+            graph = new Graph(width, height, dataLinks, dataNodes);
             //初始化布局
-  // console.log(l)
-  var z = new Zoom(svg, transform);
+            // console.log(l)
+            var z = new Zoom(svg, transform);
 
             graph.create(edges, nodes, neighbors);
             paths.Create(dataLinks);
 
 
             var l = new Lasso();
-           l.bind();
-
-                      console.log(k)
+            l.bind();
+ 
         })
         function stripscript(s) {
-            var pattern = new RegExp("[`~!@#$^&*()=|{}':;',\\[\\].<>/?~！@#￥……&*（）&mdash;—|{}【】‘；：”“'。，、？]")
+            var pattern = new RegExp("[`+~!@#$^&*()=|{}':;',\\[\\].<>/?~！@#￥……&*（）&;—|{}【】‘；：”“'。，、？]")
             var rs = "";
             for (var i = 0; i < s.length; i++) {
                 rs = rs + s.substr(i, 1).replace(pattern, '');
